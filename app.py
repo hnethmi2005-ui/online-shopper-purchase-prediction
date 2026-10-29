@@ -16,11 +16,18 @@ st.write(
     "whether a shopping session will result in a purchase."
 )
 
+from xgboost import XGBClassifier
+
 @st.cache_resource
 def load_model():
-    return joblib.load("tuned_xgboost_model.pkl")
+    preprocessor = joblib.load("preprocessor.pkl")
 
-model = load_model()
+    classifier = XGBClassifier()
+    classifier.load_model("xgboost_model.json")
+
+    return preprocessor, classifier
+
+preprocessor, classifier = load_model()
 
 st.subheader("Customer Browsing Information")
 
@@ -146,9 +153,13 @@ if st.button("Predict Purchase Intention"):
         "Weekend": weekend
     }])
 
-    prediction = model.predict(input_data)[0]
+    processed_input = preprocessor.transform(input_data)
 
-    probability = model.predict_proba(input_data)[0][1]
+prediction = classifier.predict(processed_input)[0]
+
+probability = classifier.predict_proba(
+    processed_input
+)[0][1]
 
     st.subheader("Prediction Result")
 
